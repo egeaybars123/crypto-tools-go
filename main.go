@@ -9,10 +9,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-// Mempool size: 64 (Hash bytes) + (Signature bytes)
+// Mempool size: 32 (Hash bytes) + 64 (Signature bytes) = 96 bytes
 func main() {
 	hash := HashKeccak("avalanche")
 	//fmt.Println(hash)
+	fmt.Println(len(hash))
 
 	privKey, _ := GeneratePrivKey()
 	pubKey := privKey.PublicKey
@@ -25,10 +26,29 @@ func main() {
 	fmt.Println(len(sig))
 
 	sigNoRec := removeRecovery(sig)
+	fmt.Println(len(sigNoRec))
+
+	joined := EncodeDataSig(hash, sigNoRec)
+	fmt.Println(len(joined))
+
+	newHash, newSig := DecodeDataSig(joined)
+	fmt.Println(len(newHash))
+	fmt.Println(len(newSig))
 
 	verified := ValidateSig(hash, sigNoRec, &pubKey)
 	fmt.Println(verified)
 	//publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
+}
+
+func EncodeDataSig(hash []byte, sig []byte) []byte {
+	return append(hash, sig...)
+}
+
+func DecodeDataSig(encoded []byte) ([]byte, []byte) {
+	hash := encoded[:32]
+	sig := encoded[32:96]
+
+	return hash, sig
 }
 
 func HashKeccak(input string) []byte {
